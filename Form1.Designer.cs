@@ -1,5 +1,5 @@
 ﻿
-namespace Сrazy_killer
+namespace CrazyKiller
 {
     partial class Form1
     {
