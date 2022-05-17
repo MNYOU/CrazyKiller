@@ -7,16 +7,14 @@ using System.Windows.Forms;
 
 namespace CrazyKiller
 {
-    static class Program // добавлена отрисовка карты и персонажа, now player can move
+    static class Program
     {
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            var player = new Player(20, new Point(160, 60));
-            var game = new GameModel(player);
-            Application.Run(new GameForm(game));
+            Application.Run(new GameForm());
         }
     }
 }
