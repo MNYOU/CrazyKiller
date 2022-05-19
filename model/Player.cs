@@ -9,19 +9,27 @@ using CrazyKiller;
 
 namespace CrazyKiller
 {
-
     public class Player : IObjectInMap
     {
+        public Point MousePosition;
+        private readonly Dictionary<Keys, bool> keysClicks;
+
         public Player()
         {
             Speed = 5;
             Position = new Point(700, 400);
-            MaxHp = 100;
+            MaxHp = 10000;
             Hp = MaxHp;
             Gun = new Pistol(this);
+            keysClicks = new Dictionary<Keys, bool>
+            {
+                {Keys.W, false},
+                {Keys.S, false},
+                {Keys.A, false},
+                {Keys.D, false}
+            };
         }
 
-        public Point MousePosition;
         private int Speed { get; }
         public Point Position { get; set; }
         public Point PreviousPosition { get; private set; }
@@ -31,16 +39,16 @@ namespace CrazyKiller
         public int Hp { get; private set; }
 
         public Gun Gun { get; set; }
+
         public void Move()
         {
+            Offset = new Size(keysClicks[Keys.D] ? Speed : 0 - (keysClicks[Keys.A] ? Speed : 0),
+                keysClicks[Keys.S] ? Speed : 0 - (keysClicks[Keys.W] ? Speed : 0));
             PreviousPosition = Position;
             var distance = Math.Sqrt(Offset.Width * Offset.Width + Offset.Height * Offset.Height);
             if (distance == 0) return;
-            if (Offset.Width != 0 && Offset.Height != 0)
-            {
-
-            }
-            var nextPoint = new Point(Position.X + (int)(Offset.Width / distance * Speed), Position.Y + (int)(Offset.Height / distance * Speed));
+            var nextPoint = new Point(Position.X + (int) (Offset.Width / distance * Speed),
+                Position.Y + (int) (Offset.Height / distance * Speed));
             if (GameModel.CanMove(nextPoint, Size))
                 Position = nextPoint;
         }
@@ -49,32 +57,17 @@ namespace CrazyKiller
         {
             ChangeOffset(key, true);
         }
+
         public void RemoveOffset(Keys key)
         {
             ChangeOffset(key, false);
         }
 
-        private void ChangeOffset(Keys key, bool add)
+        private void ChangeOffset(Keys key, bool click)
         {
-            switch (key)
-            {
-                case Keys.W:
-                    if (Offset.Height != -Speed && add || Offset.Height == -Speed && !add)
-                        Offset = new Size(Offset.Width, Offset.Height - Speed * (add ? 1 : -1));
-                    break;
-                case Keys.S:
-                    if (Offset.Height != Speed && add || Offset.Height == Speed && !add)
-                        Offset = new Size(Offset.Width, Offset.Height + Speed * (add ? 1 : -1));
-                    break;
-                case Keys.A:
-                    if (Offset.Width != -Speed && add || Offset.Width == -Speed && !add)
-                        Offset = new Size(Offset.Width - Speed * (add ? 1 : -1), Offset.Height);
-                    break;
-                case Keys.D:
-                    if (Offset.Width != Speed && add || Offset.Width == Speed && !add)
-                        Offset = new Size(Offset.Width + Speed * (add ? 1 : -1), Offset.Height);
-                    break;
-            }
+            if (!keysClicks.ContainsKey(key)) throw new NullReferenceException();
+            if (click != keysClicks[key])
+                keysClicks[key] = !keysClicks[key];
         }
 
 
