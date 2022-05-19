@@ -11,6 +11,6 @@ namespace CrazyKiller
         int Damage { get; }
         int Ammunition { get; }
         int Distance { get; }
-        double Recharge { get; }
+        int Recharge { get; }
     }
 }

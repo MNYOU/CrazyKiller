@@ -10,19 +10,31 @@ namespace CrazyKiller
     public class Gun : IObjectInMap, IGun
     {
         private Player player;
+        private static Size size;
+        private int elapsedTime;
+        private readonly int reloadingBetweenShoots;
 
         public Gun(Player player)
         {
             this.player = player;
+            reloadingBetweenShoots = 10;
+            elapsedTime = reloadingBetweenShoots;
         }
 
-        public bool IsShoot { get; set; }
-        public Size Size { get; set; }
+        public bool MouseIsClick { get; set; }
+        public bool IsShooting { get; private set; }
+
+        public Size Size
+        {
+            get => size;
+            set => size = value;
+        }
+
         public int Damage { get; protected set; }
         public int Ammunition { get; protected set; }
         public int Distance { get; protected set; }
         public int FiredAmmunition { get; set; }
-        public double Recharge { get; protected set; }
+        public int Recharge { get; protected set; }
 
         public Point Position
         {
@@ -38,30 +50,61 @@ namespace CrazyKiller
 
         public void Shoot(List<Zombie> zombies)
         {
-            if (!IsShoot) return;
+            IsShooting = false;
+            if (FiredAmmunition == Ammunition || elapsedTime != reloadingBetweenShoots)
+                elapsedTime++;
+            if (FiredAmmunition == Ammunition)
+            {
+                if (elapsedTime != Recharge) return;
+                elapsedTime = 0;
+                FiredAmmunition = 0;
+            }
+
+            if (elapsedTime != reloadingBetweenShoots) return;
+            if (!MouseIsClick) return;
+            elapsedTime = 0;
             var zombie = zombies
-                .OrderBy(z => GameModel.GetDistance(z.Position, player.Position))
+                .OrderBy(z => PointMethods.GetDistance(z.Position, player.Position))
                 .FirstOrDefault(IsPenetration);
             if (zombie == null) return;
+            FiredAmmunition++;
+            IsShooting = true;
             zombie.Hp -= Damage;
             if (zombie.Hp <= 0) zombies.Remove(zombie);
         }
 
         public bool IsPenetration(IObjectInMap target)
         {
-            var playerToMouse = new Point(player.MousePosition.X - player.Position.X,
-                player.MousePosition.Y - player.Position.Y);
-            Func<int, int> f = x => (int) (playerToMouse.Y * 1.0 / playerToMouse.X * x);
+            // лютая логика(не факт, что эффективная), понимать не советую
+            if (target.Position.X >= player.Position.X)
+            {
+                if (target.Position.X - target.Size.Width / 2 > Position.X) return false;
+            }
+            else if (target.Position.X + target.Size.Width / 2 < Position.X)
+            {
+                return false;
+            }
+
+            var playerToAim = new Point(Position.X - player.Position.X,
+                Position.Y - player.Position.Y);
+            Func<int, int> f = x => (int) (playerToAim.Y * 1.0 / playerToAim.X * x);
             var playerToTarget = new Point(target.Position.X - player.Position.X,
                 target.Position.Y - player.Position.Y);
-            if (f(playerToTarget.X) <= playerToTarget.X + target.Size.Width / 2 &&
-                f(playerToTarget.X) >= playerToTarget.X - target.Size.Width / 2) return true;
-            return false;
-        }
+            if (Math.Abs(playerToAim.Y) - Math.Abs(playerToAim.X) > 0)
+            {
+                (playerToAim.X, playerToAim.Y) = (playerToAim.Y, playerToAim.X);
+                (playerToTarget.X, playerToTarget.Y) = (playerToTarget.Y, playerToTarget.X);
+            }
 
-        public Point GetAim()
-        {
-            return new Point();
+            if (f(playerToTarget.X) <= playerToTarget.Y + target.Size.Height / 2 &&
+                f(playerToTarget.X) >= playerToTarget.Y - target.Size.Height / 2)
+            {
+                ((Zombie) target).IsPenetration = true;
+                return true;
+            }
+
+            ((Zombie) target).IsPenetration = false;
+            return false;
         }
     }
 
@@ -69,7 +112,7 @@ namespace CrazyKiller
     {
         public Pistol(Player player) : base(player)
         {
-            Damage = 4;
+            Damage = 20;
             Ammunition = 10;
             Recharge = 19;
             Distance = 200;
@@ -80,10 +123,10 @@ namespace CrazyKiller
     {
         public MachineGun(Player player) : base(player)
         {
-            Damage = 4;
-            Ammunition = 10;
+            Damage = 30;
+            Ammunition = 20;
             Recharge = 19;
-            Distance = 100;
+            Distance = 300;
         }
     }
 
@@ -91,10 +134,21 @@ namespace CrazyKiller
     {
         public Shotgun(Player player) : base(player)
         {
-            Damage = 4;
-            Ammunition = 10;
+            Damage = 50;
+            Ammunition = 6;
             Recharge = 19;
-            Distance = 100;
+            Distance = 150;
+        }
+    }
+
+    public class Rifle : Gun
+    {
+        public Rifle(Player player) : base(player)
+        {
+            Damage = 100;
+            Ammunition = 4;
+            Recharge = 19;
+            Distance = 400;
         }
     }
 }
