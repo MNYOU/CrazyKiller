@@ -34,13 +34,13 @@ namespace CrazyKiller
         private void MouseUp(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
-                game.Player.Gun.IsShoot = false;
+                game.Player.Gun.MouseIsClick = false;
         }
 
         private void MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
-                game.Player.Gun.IsShoot = true;
+                game.Player.Gun.MouseIsClick = true;
         }
 
         private void MouseMove(object sender, MouseEventArgs e)
