@@ -4,7 +4,7 @@ using CrazyKiller;
 
 namespace CrazyKiller
 {
-    public sealed partial class GameForm : Form
+    public sealed class GameForm : Form
     {
         private GameModel game;
         private Player player;
@@ -17,7 +17,7 @@ namespace CrazyKiller
             InitializeComponent();
             GameModel.WindowSize = ClientSize;
             // GameModel.WindowSize = Size;
-            this.game = new GameModel();
+            game = new GameModel();
             player = game.Player;
             View = new View(this, game);
             Control = new Control(this, game);
@@ -46,16 +46,18 @@ namespace CrazyKiller
 
         private void InitializeComponent()
         {
-            StartPosition = FormStartPosition.CenterScreen;
-            WindowState = FormWindowState.Maximized; // полноэкранный режим
-            Text = "CrazyKiller";
+            // this.SuspendLayout();
+            this.BackColor = System.Drawing.Color.DarkSlateGray;
+            // this.ClientSize = new System.Drawing.Size(1567, 619);
             Size = Screen.PrimaryScreen.Bounds.Size;
-            Dock = DockStyle.Fill;
+            this.DoubleBuffered = true;
             MinimumSize = new Size(600, 600);
-            // Icon = Icon.ExtractAssociatedIcon("C:/Programs/C#/СrazyKiller/images/icon.ico");
-            Size = new Size(1500, 800);
-            BackColor = Color.DarkSlateGray;
-            DoubleBuffered = true;
+            Name = "GameForm";
+            Text = "CrazyKiller";
+            StartPosition = FormStartPosition.CenterScreen;
+            WindowState = FormWindowState.Maximized;
+            // this.ResumeLayout(false);
+
         }
     }
 }
