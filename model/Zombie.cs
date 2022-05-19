@@ -10,9 +10,17 @@ namespace CrazyKiller
     public class Zombie : IObjectInMap
     {
         public int Hp;
+        public bool IsPenetration;
         public Point Position { get; private set; }
         public Point PreviousPosition { get; private set; }
-        public Size Size { get; set; }
+        private static Size size;
+
+        public Size Size
+        {
+            get => size;
+            set => size = value;
+        }
+
         public int Speed { get; }
         public int Damage { get; }
         public Random rnd = GameModel.rnd;
@@ -55,6 +63,7 @@ namespace CrazyKiller
                             GameModel.WindowSize.Height + distance * 2);
                     break;
             }
+
             Position = new Point(x, y);
         }
 
@@ -69,7 +78,7 @@ namespace CrazyKiller
             var nextPoint = new Point((int) (Position.X + offset.X / distance * Speed),
                 (int) (Position.Y + offset.Y / distance * Speed));
             // if (GameModel.CanMove(nextPoint, this.Size))
-                Position = nextPoint;
+            Position = nextPoint;
         }
     }
 }

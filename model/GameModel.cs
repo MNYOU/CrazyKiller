@@ -25,13 +25,12 @@ namespace CrazyKiller
         public GameModel()
         {
             Player = new Player();
-            Size = new Size(37, 19);
             InitializeTimer();
             Zombies = new List<Zombie>();
             for (var i = 0; i < 20; i++)
                 Zombies.Add(new Zombie());
             MedKit = new MedKit();
-            Box = new Box(Player);
+            Box = new Box();
         }
 
         public void Start()
@@ -77,18 +76,12 @@ namespace CrazyKiller
 
         public static bool CanMove(Point destination, Size size)
         {
-            if (destination.X + size.Width / 2 > WindowSize.Width ||
+            if (destination.X - size.Width / 2 > WindowSize.Width ||
                 destination.X - size.Width / 2 < 0 ||
                 destination.Y + size.Height / 2 > WindowSize.Height ||
                 destination.Y - size.Height / 2 < 0) 
                 return false;
             return true;
-        }
-
-        public static int GetDistance(Point start, Point finish)
-        {
-            var point = new Point(finish.X - start.X, finish.Y - start.Y);
-            return (int) Math.Sqrt(point.X * point.X + point.Y * point.Y);
         }
 
         public bool IsOccupied() // чтобы зомби не могли ходить в себя
