@@ -14,5 +14,10 @@ namespace CrazyKiller
         {
             Health = 50;
         }
+
+        protected override void Use(Player player)
+        {
+            player.AddHeath(Health);
+        }
     }
 }

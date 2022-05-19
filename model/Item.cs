@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace CrazyKiller
 {
@@ -29,13 +30,13 @@ namespace CrazyKiller
             switch (rnd.Next(0, 3))
             {
                 case 0:
-                    timeToActivate = 2000;
+                    timeToActivate = 700;
                     break;
                 case 1:
-                    timeToActivate = 4000;
+                    timeToActivate = 1000;
                     break;
                 case 2:
-                    timeToActivate = 10000;
+                    timeToActivate = 2000;
                     break;
             }
         }
@@ -70,14 +71,14 @@ namespace CrazyKiller
 
             if (GameModel.IsInteract(this, player))
             {
-                if (this is MedKit)
-                    player.AddHeath(((MedKit) this).Health);
-                else if (this is Box)
-                    player.Gun = ((Box) this).Gun;
-                else
-                    throw new InvalidCastException();
+                Use(player);
                 Deactivate();
             }
+        }
+
+        protected virtual void Use(Player player)
+        {
+            throw new NotImplementedException("метод не реализован");
         }
     }
 }
