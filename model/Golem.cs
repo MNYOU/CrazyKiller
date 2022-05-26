@@ -4,15 +4,15 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace CrazyKiller
 {
-    public class Zombie : IObjectInMap
+    public class Golem : IObjectInMap
     {
         public int Hp;
-        public bool IsPenetration;
-        public Point Position { get; private set; }
-        public Point PreviousPosition { get; private set; }
+        public bool IsPenetration { get; set; }
+        public bool IsAttack;
         private static Size size;
 
         public Size Size
@@ -21,19 +21,23 @@ namespace CrazyKiller
             set => size = value;
         }
 
+        public bool IsDead => Hp <= 0;
+
+        public Point Position { get; private set; }
+        public Point PreviousPosition { get; private set; }
         public int Speed { get; }
         public int Damage { get; }
         public Random rnd = GameModel.rnd;
 
-        public Zombie()
+        public Golem()
         {
             Hp = 100;
-            Speed = 2;
+            Speed = 5;
             Damage = 1;
             GeneratePosition();
         }
 
-        public void GeneratePosition()
+        private void GeneratePosition()
         {
             var distance = 400;
             var x = rnd.Next(GameModel.WindowSize.Width);
@@ -69,16 +73,16 @@ namespace CrazyKiller
 
         public void Move(Player player)
         {
-            var playerPos = player.Position;
             PreviousPosition = Position;
+            var playerPos = player.Position;
             if (GameModel.IsInteract(player, this)) return;
             var offset = new Point(playerPos.X - Position.X, playerPos.Y - Position.Y);
             var distance = Math.Sqrt(offset.X * offset.X + offset.Y * offset.Y);
             if (distance == 0) return;
-            var nextPoint = new Point((int) (Position.X + offset.X / distance * Speed),
-                (int) (Position.Y + offset.Y / distance * Speed));
-            // if (GameModel.CanMove(nextPoint, this.Size))
-            Position = nextPoint;
+            var absOffset = new Point((int) Math.Abs(offset.X / distance * Speed),
+                (int) Math.Abs(offset.Y / distance * Speed));
+            Position = new Point(Position.X + absOffset.X * Math.Sign(offset.X),
+                Position.Y + absOffset.Y * Math.Sign(offset.Y));
         }
     }
 }
