@@ -20,23 +20,22 @@ namespace CrazyKiller
         private int timeToActivate { get; set; }
 
         public bool IsActive { get; private set; }
-        public Point Position { get; set; }
+        public Point Position { get; private set; }
         public Size Size { get; set; }
-        public Random rnd = GameModel.rnd;
+        private readonly Random rnd = GameModel.rnd;
 
         private void GenerateSleepTime()
         {
-            // слишком быстро
             switch (rnd.Next(0, 3))
             {
                 case 0:
-                    timeToActivate = 700;
+                    timeToActivate = rnd.Next(500,700);
                     break;
                 case 1:
-                    timeToActivate = 1000;
+                    timeToActivate = rnd.Next(700, 1000);
                     break;
                 case 2:
-                    timeToActivate = 2000;
+                    timeToActivate = rnd.Next(1000, 1500);
                     break;
             }
         }
