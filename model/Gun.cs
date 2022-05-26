@@ -22,14 +22,12 @@ namespace CrazyKiller
         }
 
         public bool MouseIsClick { get; set; }
-        public bool IsShooting { get; private set; }
-
+        public bool ISPenetration { get; private set; }
         public Size Size
         {
             get => size;
             set => size = value;
         }
-
         public int Damage { get; protected set; }
         public int Ammunition { get; protected set; }
         public int Distance { get; protected set; }
@@ -42,15 +40,15 @@ namespace CrazyKiller
             {
                 var playerToMouse = new Point(player.MousePosition.X - player.Position.X,
                     player.MousePosition.Y - player.Position.Y);
+                if (playerToMouse == Point.Empty) playerToMouse = new Point(1, 1);
                 var distance = Math.Sqrt(playerToMouse.X * playerToMouse.X + playerToMouse.Y * playerToMouse.Y);
                 return new Point(player.Position.X + (int) (playerToMouse.X / distance * Distance),
                     player.Position.Y + (int) (playerToMouse.Y / distance * Distance));
             }
         }
 
-        public void Shoot(List<Zombie> zombies)
+        public void Shoot(List<Golem> zombies)
         {
-            IsShooting = false;
             if (FiredAmmunition == Ammunition || elapsedTime != reloadingBetweenShoots)
                 elapsedTime++;
             if (FiredAmmunition == Ammunition)
@@ -61,21 +59,26 @@ namespace CrazyKiller
             }
 
             if (elapsedTime != reloadingBetweenShoots) return;
+            foreach (var z in zombies)
+                z.IsPenetration = false;
+            ISPenetration = false;
             if (!MouseIsClick) return;
             elapsedTime = 0;
+            FiredAmmunition++;
             var zombie = zombies
                 .OrderBy(z => PointMethods.GetDistance(z.Position, player.Position))
                 .FirstOrDefault(IsPenetration);
-            if (zombie == null) return;
-            FiredAmmunition++;
-            IsShooting = true;
+            if (zombie is null) return;
+            ISPenetration = true;
             zombie.Hp -= Damage;
-            if (zombie.Hp <= 0) zombies.Remove(zombie);
+            if (zombie.IsDead) zombies.Remove(zombie);
         }
 
-        public bool IsPenetration(IObjectInMap target)
+        private bool IsPenetration(IObjectInMap target)
         {
             // лютая логика(не факт, что эффективная), понимать не советую
+            ((Golem)target).IsPenetration = false;
+
             if (target.Position.X >= player.Position.X)
             {
                 if (target.Position.X - target.Size.Width / 2 > Position.X) return false;
@@ -99,11 +102,10 @@ namespace CrazyKiller
             if (f(playerToTarget.X) <= playerToTarget.Y + target.Size.Height / 2 &&
                 f(playerToTarget.X) >= playerToTarget.Y - target.Size.Height / 2)
             {
-                ((Zombie) target).IsPenetration = true;
+                ((Golem) target).IsPenetration = true;
                 return true;
             }
 
-            ((Zombie) target).IsPenetration = false;
             return false;
         }
     }
@@ -114,7 +116,7 @@ namespace CrazyKiller
         {
             Damage = 20;
             Ammunition = 10;
-            Recharge = 19;
+            Recharge = 10;
             Distance = 200;
         }
     }
@@ -125,7 +127,7 @@ namespace CrazyKiller
         {
             Damage = 30;
             Ammunition = 20;
-            Recharge = 19;
+            Recharge = 23;
             Distance = 300;
         }
     }
@@ -136,7 +138,7 @@ namespace CrazyKiller
         {
             Damage = 50;
             Ammunition = 6;
-            Recharge = 19;
+            Recharge = 27;
             Distance = 150;
         }
     }
@@ -147,7 +149,7 @@ namespace CrazyKiller
         {
             Damage = 100;
             Ammunition = 4;
-            Recharge = 19;
+            Recharge = 35;
             Distance = 400;
         }
     }

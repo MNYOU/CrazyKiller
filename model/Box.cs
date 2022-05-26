@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CrazyKiller
 {
-    public class Box : Item // плохое оружие выпадает с большим шансом, хорошое с меньшим
+    public class Box : Item
     {
         private static Gun GenerateGun(Player player)
         {

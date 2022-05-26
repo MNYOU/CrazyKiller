@@ -1,36 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
+using ContentAlignment = System.Drawing.ContentAlignment;
 
 namespace CrazyKiller
 {
     public class View
     {
-        private GameForm form;
-        private GameModel game;
-        private Player player;
-        private Graphics graphics;
-        private bool IsDownloading;
-        private bool IsStarted;
+        private bool IsOver;
         private bool IsPause;
+        private int counter;
+        private readonly Font buttonFont;
+        private readonly Font ammunitionFont;
+        private readonly Color labelFontColor;
+        private readonly Size buttonSize;
         private Dictionary<string, Image> images;
+        private string[] phrases;
+        public Sounds Sounds { get; }
+        private ViewGolems golemsView;
+        private ViewPlayer viewPlayer;
+
+        private GameForm form { get; }
+        private GameModel game { get; }
+        private Player Player { get; }
+        private Graphics graphics { get; set; }
 
         public View(GameForm form, GameModel game)
         {
             this.form = form;
             this.game = game;
-            player = game.Player;
+            Player = game.Player;
             form.Paint += Paint;
             InitializeImages();
-            IsDownloading = true;
+            GetPhrases();
+            buttonSize = new Size(500, 70);
+            buttonFont = new Font(FontFamily.GenericMonospace, 30, FontStyle.Regular);
+            ammunitionFont = new Font(FontFamily.GenericSerif, 50, FontStyle.Bold);
+            labelFontColor = Color.White;
+            Sounds = new Sounds();
         }
 
+        private void GetPhrases()
+        {
+            phrases = new[]
+            {
+                "Ты победил всех и можешь по праву считаться истинным мастером-героем",
+                "Что ж... Это была хорошая попытка. Однако пока ты недостаточно силён",
+            };
+        }
 
         private void InitializeImages()
         {
@@ -39,16 +64,19 @@ namespace CrazyKiller
                 "\\images\\";
             form.Icon = Icon.ExtractAssociatedIcon(path + "handgun.ico");
             images = new Dictionary<string, Image>();
-            InitializeImage(path, "medkitSmall.png", player);
-            InitializeImage(path, "medkitSmall.png", game.Zombies.First());
-            InitializeImage(path, "aimSmall.png", player.Gun);
+            InitializeImage(path, "medkitSmall.png", Player);
+            // InitializeImage(path, "medkitSmall.png", game.Zombies.FirstOrDefault());
+            game.Zombies.FirstOrDefault().Size = new Size(105, 70);
+            InitializeImage(path, "aimSmall.png", Player.Gun);
             InitializeImage(path, "medkitSmall.png", game.MedKit);
             InitializeImage(path, "boxSmall.png", game.Box, 2, 2);
             InitializeImage(path, "unitySmall.png");
             InitializeImage(path, "guns.png");
-            InitializeImage(path, "numbersSmall.png");
             InitializeImage(path, "firstPart.png");
             InitializeImage(path, "secondPart.png");
+            InitializeImage(path, "backMenu.png");
+            InitializeImage(path, "background2.png");
+            InitializeImage(path, "background.png");
         }
 
         private void InitializeImage(string path, string fileName, IObjectInMap obj = null, int column = 1, int row = 1)
@@ -59,110 +87,107 @@ namespace CrazyKiller
                 obj.Size = new Size(image.Width / column, image.Height / row);
         }
 
-        public void Paint(object sender, PaintEventArgs e)
+        private void Paint(object sender, PaintEventArgs e)
         {
             graphics = e.Graphics;
+            if (game.IsPause) return;
+            if (game.IsOver)
+            {
+                End();
+            }
+            else if (game.IsStarted)
+            {
+                Items();
+                golemsView.PaintGolems(graphics, game.Zombies);
+                viewPlayer.Paint(graphics);
+                PanelBar();
+                PaintAim();
+            }
+        }
 
-            if (IsDownloading)
-                Download();
-            if (!IsStarted || IsPause) return;
-            Player();
-            PanelBar();
-            Zombies();
-            Items();
+        public void InitializeStart()
+        {
+            form.BackgroundImage = images["background2"];
+            form.BackgroundImageLayout = ImageLayout.Stretch;
+            // form.BackColor = Color.DarkGray;
+
+            golemsView = new ViewGolems(game.Zombies);
+            viewPlayer = new ViewPlayer(Player);
+        }
+
+        public void AddButtonInForm(Point position, string text, string name = null)
+        {
+            var button = new Button();
+            button.Size = buttonSize;
+            if (position != Point.Empty)
+                button.Location = position - new Size(button.Size.Width / 2, button.Size.Height / 2);
+            button.Name = name ?? "";
+            button.Text = text;
+            button.ForeColor = Color.Black;
+            button.Font = buttonFont;
+            button.BackColor = Color.Crimson;
+            form.buttons.Add(button);
         }
 
         public void AddStartMenu()
         {
-            IsDownloading = false;
-            form.BackColor = Color.DarkGray;
-            var start = new Button();
-            start.Text = "Начать игру";
-            start.Size = new Size(300, 50);
-            start.Location = new Point((form.ClientSize.Width - start.Width) / 2,
-                form.ClientSize.Height / 2 - start.Height);
-            form.Controls.Add(start);
-
-            var end = new Button();
-            end.Text = "Выйти";
-            end.Size = new Size(300, 50);
-            end.Location = new Point((form.ClientSize.Width - start.Width) / 2, form.ClientSize.Height / 2);
-            end.Click += (sender, args) => Application.Exit();
-            form.Controls.Add(end);
-
-            start.Click += (sender, args) =>
-            {
-                RemoveStartMenu(new[] {start, end});
-                game.Start();
-                IsStarted = true;
-            };
+            var buttonPos = new Point(form.ClientSize.Width / 2, form.ClientSize.Height * 3 / 4);
+            form.ChangeButtonPositionAndStatus("Start", buttonPos);
+            buttonPos.Y += buttonSize.Height + 10;
+            form.ChangeButtonPositionAndStatus("Exit", buttonPos);
+            form.BackgroundImageLayout = ImageLayout.Stretch;
+            form.BackgroundImage = images["backMenu"];
         }
 
-        private void RemoveStartMenu(Button[] buttons)
+        private void End()
         {
-            foreach (var button in buttons)
-                form.Controls.Remove(button);
+            if (counter == 170)
+                Application.Exit();
+            Sounds.Stop();
+            counter++;
+            if (IsOver) return;
+            IsOver = true;
+            var label = new Label();
+            label.Size = new Size(GameModel.WindowSize.Width * 3 / 4, 500);
+            label.BackColor = Color.Transparent;
+            label.Font = new Font(FontFamily.GenericMonospace, 40, FontStyle.Italic);
+            label.ForeColor = labelFontColor;
+            label.TextAlign = ContentAlignment.MiddleCenter;
+            label.Location = new Point((form.ClientSize.Width - label.Size.Width) / 2,
+                (form.ClientSize.Height - label.Size.Height) / 2);
+            label.Text = game.IsWon ? phrases.FirstOrDefault() : phrases.LastOrDefault();
+            form.Controls.Clear();
+            form.Controls.Add(label);
+            label.BringToFront();
         }
 
-        public void Download()
+        private void PaintAim()
         {
-            form.BackColor = Color.White;
-            var image = images["unitySmall"];
-            graphics.DrawImage(image,
-                new Point((form.ClientSize.Width - image.Width) / 2, (form.ClientSize.Height - image.Height) / 2));
-        }
-
-        public void Pause()
-        {
-        }
-
-        private void Player()
-        {
-            var position = PointMethods.GetOffsetPosition(player);
-            graphics.DrawRectangle(new Pen(Color.Blue, 5), position.X, position.Y, player.Size.Width,
-                player.Size.Height);
-            graphics.DrawEllipse(new Pen(Color.Black, 2), new Rectangle(player.Position.X, player.Position.Y, 5, 5));
-
-            var aimPos = PointMethods.GetOffsetPosition(player.Gun);
+            var aimPos = PointMethods.GetOffsetPosition(Player.Gun);
             graphics.DrawImage(images["aimSmall"], aimPos);
-            if (player.Gun.IsShooting)
+            if (Player.Gun.ISPenetration)
                 graphics.DrawRectangle(new Pen(Color.Chartreuse, 10), 10, 10, 50, 50);
-            if (player.Gun.MouseIsClick)
+            if (Player.Gun.MouseIsClick)
                 graphics.DrawRectangle(new Pen(Color.Blue, 10), 60, 10, 50, 50);
-        }
-
-        private void Zombies()
-        {
-            foreach (var zombie in game.Zombies)
-            {
-                var position = PointMethods.GetOffsetPosition(zombie);
-                var pen = new Pen(Color.Red, 5);
-                if (zombie.IsPenetration)
-                {
-                    zombie.IsPenetration = false;
-                    pen.Color = Color.Orange;
-                }
-
-                graphics.DrawRectangle(pen, position.X, position.Y, zombie.Size.Width, zombie.Size.Height);
-                graphics.DrawEllipse(new Pen(Color.Black, 2),
-                    new Rectangle(zombie.Position.X, zombie.Position.Y, 5, 5));
-            }
         }
 
         private void PanelBar()
         {
             var length = 500;
-            var start = new Point((GameModel.WindowSize.Width - length) / 2, GameModel.WindowSize.Height - 100);
+            var start = new Point((GameModel.WindowSize.Width - length) / 2, GameModel.WindowSize.Height - 70);
             var end = start;
             end.X += length;
             var pen = new Pen(Color.Black, 27);
             graphics.DrawLine(pen, start, end);
-            end.X = start.X + (int) (length * (player.Hp * 1.0 / player.MaxHp));
+            end.X = start.X + (int) (length * (Player.Hp * 1.0 / Player.MaxHp));
             pen.Color = Color.Red;
             graphics.DrawLine(pen, start, end);
 
             end.X = start.X + length;
             PaintGun(end);
+
+            var pos = new Point(form.ClientSize.Width - 230, form.ClientSize.Height / 2 - 50);
+            graphics.DrawString("волна " + game.currentLevel?.Number, buttonFont, new SolidBrush(Color.Black), pos);
         }
 
         private void PaintGun(Point position)
@@ -171,44 +196,31 @@ namespace CrazyKiller
             var image = images["guns"];
             var imageSize = new Size(image.Width / 11, image.Height / 11);
             var imagePosition = new Point();
-            if (player.Gun is MachineGun)
-                imagePosition = new Point(imageSize.Width, 0);
-            else if (player.Gun is Shotgun)
-                imagePosition = new Point(imageSize.Width * 4, imageSize.Height * 6);
-            else if (player.Gun is Pistol)
-                imagePosition = new Point(0, imageSize.Height);
-            else if (player.Gun is Rifle)
-                imagePosition = new Point(imageSize.Width * 5, 0);
-            else
-                throw new InvalidCastException("Оружие не добавлено в отрисовку");
+            switch (Player.Gun)
+            {
+                case MachineGun _:
+                    imagePosition = new Point(imageSize.Width, 0);
+                    break;
+                case Shotgun _:
+                    imagePosition = new Point(imageSize.Width * 4, imageSize.Height * 6);
+                    break;
+                case Pistol _:
+                    imagePosition = new Point(0, imageSize.Height);
+                    break;
+                case Rifle _:
+                    imagePosition = new Point(imageSize.Width * 5, 0);
+                    break;
+                default:
+                    throw new InvalidCastException("Оружие не добавлено в отрисовку");
+            }
+
             var rect = new Rectangle(imagePosition, imageSize);
             graphics.DrawImage(image, position.X, position.Y, rect, GraphicsUnit.Pixel);
 
-            position = new Point(position.X + imageSize.Width + 20, position.Y + 7);
-            image = images["firstPart"];
-            imageSize = new Size(image.Width / 5, image.Height);
-            var ammunition = (player.Gun.Ammunition - player.Gun.FiredAmmunition).ToString();
-            foreach (var digit in ammunition)
-            {
-                image = char.GetNumericValue(digit) < 5 ? images["firstPart"] : images["secondPart"];
-                var gunRect = GetRectangleForGun((int) char.GetNumericValue(digit), imageSize);
-                graphics.DrawImage(image, position.X, position.Y, gunRect, GraphicsUnit.Pixel);
-                position.X += imageSize.Width;
-            }
+            var ammunition = (Player.Gun.Ammunition - Player.Gun.FiredAmmunition).ToString();
+            position = new Point(position.X + imageSize.Width + 20, position.Y + 10);
+            graphics.DrawString(ammunition + " ", ammunitionFont, new SolidBrush(Color.Black), position);
         }
-
-        private Rectangle GetRectangleForGun(int digit, Size imageSize)
-        {
-            var position = new Point();
-            if (digit > 4)
-            {
-                digit -= 5;
-            }
-
-            position.X = imageSize.Width * digit;
-            return new Rectangle(position, imageSize);
-        }
-
 
         private void Items()
         {
@@ -222,26 +234,6 @@ namespace CrazyKiller
                 var rectangle = new Rectangle(0, 0, box.Size.Width, box.Size.Height);
                 graphics.DrawImage(images["boxSmall"], position.X, position.Y, rectangle, GraphicsUnit.Pixel);
             }
-        }
-    }
-
-    public static class PointMethods
-    {
-        public static Point GetOffsetPosition(IObjectInMap obj)
-        {
-            return GetOffsetPosition(obj.Position, obj.Size);
-        }
-
-        public static Point GetOffsetPosition(Point position, Size size)
-        {
-            var offset = new Size(size.Width / 2, size.Height / 2);
-            return position - offset;
-        }
-
-        public static int GetDistance(Point start, Point finish)
-        {
-            var point = new Point(finish.X - start.X, finish.Y - start.Y);
-            return (int) Math.Sqrt(point.X * point.X + point.Y * point.Y);
         }
     }
 }

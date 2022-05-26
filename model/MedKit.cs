@@ -12,7 +12,7 @@ namespace CrazyKiller
 
         public MedKit()
         {
-            Health = 50;
+            Health = 500;
         }
 
         protected override void Use(Player player)

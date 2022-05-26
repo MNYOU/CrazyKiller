@@ -12,13 +12,15 @@ namespace CrazyKiller
     public class Player : IObjectInMap
     {
         public Point MousePosition;
+        public bool IsAttacked;
         private readonly Dictionary<Keys, bool> keysClicks;
 
         public Player()
         {
             Speed = 5;
             Position = new Point(700, 400);
-            MaxHp = 10000;
+            PreviousPosition = Position;
+            MaxHp = 1000;
             Hp = MaxHp;
             Gun = new Pistol(this);
             keysClicks = new Dictionary<Keys, bool>
