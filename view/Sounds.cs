@@ -16,13 +16,13 @@ namespace CrazyKiller
         public Sounds()
         {
             Path = string.Join("\\", AppDomain.CurrentDomain.BaseDirectory.Split('\\').Reverse().Skip(3).Reverse()) +
-                   $"\\view\\media\\";
+                   @"\view\media\";
             SoundPlayer = new SoundPlayer();
         }
 
         public void StartMusic()
         {
-            SoundPlayer.SoundLocation = Path + "gta.wav";
+            SoundPlayer.SoundLocation = Path + "soundtrack.wav";
             SoundPlayer.Play();
         }
         public void SoundButtonClick()

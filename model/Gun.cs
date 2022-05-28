@@ -9,10 +9,10 @@ namespace CrazyKiller
 {
     public class Gun : IObjectInMap, IGun
     {
-        private Player player;
         private static Size size;
-        private int elapsedTime;
+        private readonly Player player;
         private readonly int reloadingBetweenShoots;
+        private int elapsedTime;
 
         public Gun(Player player)
         {
@@ -22,7 +22,6 @@ namespace CrazyKiller
         }
 
         public bool MouseIsClick { get; set; }
-        public bool ISPenetration { get; private set; }
         public Size Size
         {
             get => size;
@@ -31,7 +30,7 @@ namespace CrazyKiller
         public int Damage { get; protected set; }
         public int Ammunition { get; protected set; }
         public int Distance { get; protected set; }
-        public int FiredAmmunition { get; set; }
+        public int FiredAmmunition { get; private set; }
         public int Recharge { get; protected set; }
 
         public Point Position
@@ -47,11 +46,11 @@ namespace CrazyKiller
             }
         }
 
-        public void Shoot(List<Golem> zombies)
+        public void Shoot(List<Golem> golems)
         {
             if (FiredAmmunition == Ammunition || elapsedTime != reloadingBetweenShoots)
                 elapsedTime++;
-            if (FiredAmmunition == Ammunition)
+            if (FiredAmmunition == Ammunition) 
             {
                 if (elapsedTime != Recharge) return;
                 elapsedTime = 0;
@@ -59,24 +58,21 @@ namespace CrazyKiller
             }
 
             if (elapsedTime != reloadingBetweenShoots) return;
-            foreach (var z in zombies)
-                z.IsPenetration = false;
-            ISPenetration = false;
+            foreach (var g in golems)
+                g.IsPenetration = false;
             if (!MouseIsClick) return;
             elapsedTime = 0;
             FiredAmmunition++;
-            var zombie = zombies
+            var golem = golems
                 .OrderBy(z => PointMethods.GetDistance(z.Position, player.Position))
                 .FirstOrDefault(IsPenetration);
-            if (zombie is null) return;
-            ISPenetration = true;
-            zombie.Hp -= Damage;
-            if (zombie.IsDead) zombies.Remove(zombie);
+            if (golem is null) return;
+            golem.Hp -= Damage;
+            if (golem.IsDead) golems.Remove(golem);
         }
 
         private bool IsPenetration(IObjectInMap target)
         {
-            // лютая логика(не факт, что эффективная), понимать не советую
             ((Golem)target).IsPenetration = false;
 
             if (target.Position.X >= player.Position.X)

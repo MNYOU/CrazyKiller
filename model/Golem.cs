@@ -10,10 +10,10 @@ namespace CrazyKiller
 {
     public class Golem : IObjectInMap
     {
-        public int Hp;
-        public bool IsPenetration { get; set; }
-        public bool IsAttack;
         private static Size size;
+        public int Hp;
+        public bool IsPenetration;
+        public bool IsAttack;
 
         public Size Size
         {
@@ -21,13 +21,11 @@ namespace CrazyKiller
             set => size = value;
         }
 
+        private int Speed { get; }
+        public int Damage { get; }
         public bool IsDead => Hp <= 0;
-
         public Point Position { get; private set; }
         public Point PreviousPosition { get; private set; }
-        public int Speed { get; }
-        public int Damage { get; }
-        public Random rnd = GameModel.rnd;
 
         public Golem()
         {
@@ -39,6 +37,7 @@ namespace CrazyKiller
 
         private void GeneratePosition()
         {
+            var rnd = GameModel.Random;
             var distance = 400;
             var x = rnd.Next(GameModel.WindowSize.Width);
             var y = rnd.Next(GameModel.WindowSize.Height);

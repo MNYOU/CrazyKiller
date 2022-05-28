@@ -10,7 +10,7 @@ namespace CrazyKiller
     {
         private static Gun GenerateGun(Player player)
         {
-            var rnd = GameModel.rnd.Next(0, 101);
+            var rnd = GameModel.Random.Next(0, 101);
             Gun gun;
             if (0 <= rnd && rnd <= 40)
                 gun = new Pistol(player);

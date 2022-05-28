@@ -11,21 +11,18 @@ namespace CrazyKiller
     public class Item : IObjectInMap
     {
         private int inactiveTime;
-
-        public Item()
+        private int timeToActivate;
+        public bool IsActive { get; private set; }
+        public Point Position { get; private set; }
+        public Size Size { get; set; }
+        protected Item()
         {
             GenerateSleepTime();
         }
 
-        private int timeToActivate { get; set; }
-
-        public bool IsActive { get; private set; }
-        public Point Position { get; private set; }
-        public Size Size { get; set; }
-        private readonly Random rnd = GameModel.rnd;
-
         private void GenerateSleepTime()
         {
+            var rnd = GameModel.Random;
             switch (rnd.Next(0, 3))
             {
                 case 0:
@@ -42,6 +39,7 @@ namespace CrazyKiller
 
         private void Activate()
         {
+            var rnd = GameModel.Random;
             IsActive = true;
             Position = new Point(rnd.Next(GameModel.WindowSize.Width - Size.Width / 2),
                 rnd.Next(GameModel.WindowSize.Height - Size.Height / 2));

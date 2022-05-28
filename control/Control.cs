@@ -13,22 +13,22 @@ namespace CrazyKiller
         private readonly GameForm form;
         private readonly GameModel game;
         private readonly Keys[] keysMove;
-        private readonly Sounds Sounds;
+        private readonly Sounds sounds;
 
         public Control(GameForm form, GameModel game, Sounds sounds)
         {
             this.form = form;
             this.game = game;
-            Sounds = sounds;
+            this.sounds = sounds;
             keysMove = new[] {Keys.A, Keys.D, Keys.W, Keys.S};
             InitializeEvents();
         }
 
         public void InitializeButtonsClicks()
         {
-            foreach (var button in form.buttons)
+            foreach (var button in form.Buttons)
             {
-                button.Click += (sender, args) => Sounds.SoundButtonClick();
+                button.Click += (sender, args) => sounds.SoundButtonClick();
                 switch (button.Name)
                 {
                     case "Start":
@@ -37,7 +37,7 @@ namespace CrazyKiller
                             form.Controls.Clear();
                             form.View.InitializeStart();
                             game.Start();
-                            Sounds.StartMusic();
+                            sounds.StartMusic();
                         };
                         break;
                     case "Exit":
@@ -47,7 +47,7 @@ namespace CrazyKiller
                         button.Click += (sender, args) =>
                         {
                             Pause(Keys.Escape);
-                            Sounds.StartMusic();
+                            sounds.StartMusic();
                         };
                         break;
                 }
@@ -78,7 +78,6 @@ namespace CrazyKiller
         private void MouseMove(object sender, MouseEventArgs e)
         {
             if (game.IsPause) return;
-            game.MousePosition = e.Location;
             game.Player.MousePosition = e.Location;
         }
 
@@ -102,14 +101,14 @@ namespace CrazyKiller
         {
             if (key != Keys.Escape) return;
             if (game.IsPause)
-                Sounds.StartMusic();
+                sounds.StartMusic();
             else
-                Sounds.Stop();
+                sounds.Stop();
             game.IsPause = !game.IsPause;
             form.ChangeButtonPositionAndStatus("Pause",
-                new Point(form.ClientSize.Width / 2, form.ClientSize.Height / 2));
+                new Point(form.Size.Width / 2, form.Size.Height / 2));
             form.ChangeButtonPositionAndStatus("Exit",
-                new Point(form.ClientSize.Width / 2, form.ClientSize.Height / 2 + 90));
+                new Point(form.Size.Width / 2, form.Size.Height / 2 + 90));
         }
     }
 }

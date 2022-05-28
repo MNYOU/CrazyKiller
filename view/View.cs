@@ -1,42 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 using ContentAlignment = System.Drawing.ContentAlignment;
 
 namespace CrazyKiller
 {
     public class View
     {
-        private bool IsOver;
-        private bool IsPause;
+        private bool isOver;
         private int counter;
         private readonly Font buttonFont;
         private readonly Font ammunitionFont;
-        private readonly Color labelFontColor;
         private readonly Size buttonSize;
         private Dictionary<string, Image> images;
         private string[] phrases;
-        public Sounds Sounds { get; }
         private ViewGolems golemsView;
         private ViewPlayer viewPlayer;
-
-        private GameForm form { get; }
-        private GameModel game { get; }
+        private GameForm Form { get; }
+        private GameModel Game { get; }
         private Player Player { get; }
-        private Graphics graphics { get; set; }
+        private Graphics Graphics { get; set; }
+        public Sounds Sounds { get; }
 
         public View(GameForm form, GameModel game)
         {
-            this.form = form;
-            this.game = game;
+            Form = form;
+            Game = game;
             Player = game.Player;
             form.Paint += Paint;
             InitializeImages();
@@ -44,7 +35,6 @@ namespace CrazyKiller
             buttonSize = new Size(500, 70);
             buttonFont = new Font(FontFamily.GenericMonospace, 30, FontStyle.Regular);
             ammunitionFont = new Font(FontFamily.GenericSerif, 50, FontStyle.Bold);
-            labelFontColor = Color.White;
             Sounds = new Sounds();
         }
 
@@ -62,20 +52,14 @@ namespace CrazyKiller
             var path =
                 string.Join("\\", AppDomain.CurrentDomain.BaseDirectory.Split('\\').Reverse().Skip(3).Reverse()) +
                 "\\images\\";
-            form.Icon = Icon.ExtractAssociatedIcon(path + "handgun.ico");
+            Form.Icon = Icon.ExtractAssociatedIcon(path + "handgun.ico");
             images = new Dictionary<string, Image>();
             InitializeImage(path, "medkitSmall.png", Player);
-            // InitializeImage(path, "medkitSmall.png", game.Zombies.FirstOrDefault());
-            game.Zombies.FirstOrDefault().Size = new Size(105, 70);
             InitializeImage(path, "aimSmall.png", Player.Gun);
-            InitializeImage(path, "medkitSmall.png", game.MedKit);
-            InitializeImage(path, "boxSmall.png", game.Box, 2, 2);
-            InitializeImage(path, "unitySmall.png");
+            InitializeImage(path, "medkitSmall.png", Game.MedKit);
+            InitializeImage(path, "boxSmall.png", Game.Box, 2, 2);
             InitializeImage(path, "guns.png");
-            InitializeImage(path, "firstPart.png");
-            InitializeImage(path, "secondPart.png");
             InitializeImage(path, "backMenu.png");
-            InitializeImage(path, "background2.png");
             InitializeImage(path, "background.png");
         }
 
@@ -89,17 +73,14 @@ namespace CrazyKiller
 
         private void Paint(object sender, PaintEventArgs e)
         {
-            graphics = e.Graphics;
-            if (game.IsPause) return;
-            if (game.IsOver)
-            {
-                End();
-            }
-            else if (game.IsStarted)
+            Graphics = e.Graphics;
+            if (Game.IsPause) return;
+            if (Game.IsOver) End();
+            else if (Game.IsStarted)
             {
                 Items();
-                golemsView.PaintGolems(graphics, game.Zombies);
-                viewPlayer.Paint(graphics);
+                golemsView.PaintGolems(Graphics, Game.Golems);
+                viewPlayer.Paint(Graphics);
                 PanelBar();
                 PaintAim();
             }
@@ -107,11 +88,9 @@ namespace CrazyKiller
 
         public void InitializeStart()
         {
-            form.BackgroundImage = images["background2"];
-            form.BackgroundImageLayout = ImageLayout.Stretch;
-            // form.BackColor = Color.DarkGray;
-
-            golemsView = new ViewGolems(game.Zombies);
+            Form.BackgroundImage = images["background"];
+            Form.BackgroundImageLayout = ImageLayout.Stretch;
+            golemsView = new ViewGolems(Game.Golems);
             viewPlayer = new ViewPlayer(Player);
         }
 
@@ -121,22 +100,22 @@ namespace CrazyKiller
             button.Size = buttonSize;
             if (position != Point.Empty)
                 button.Location = position - new Size(button.Size.Width / 2, button.Size.Height / 2);
-            button.Name = name ?? "";
+            if (name != null) button.Name = name;
             button.Text = text;
             button.ForeColor = Color.Black;
             button.Font = buttonFont;
             button.BackColor = Color.Crimson;
-            form.buttons.Add(button);
+            Form.Buttons.Add(button);
         }
 
         public void AddStartMenu()
         {
-            var buttonPos = new Point(form.ClientSize.Width / 2, form.ClientSize.Height * 3 / 4);
-            form.ChangeButtonPositionAndStatus("Start", buttonPos);
+            var buttonPos = new Point(Form.Size.Width / 2, Form.Size.Height * 3 / 4);
+            Form.ChangeButtonPositionAndStatus("Start", buttonPos);
             buttonPos.Y += buttonSize.Height + 10;
-            form.ChangeButtonPositionAndStatus("Exit", buttonPos);
-            form.BackgroundImageLayout = ImageLayout.Stretch;
-            form.BackgroundImage = images["backMenu"];
+            Form.ChangeButtonPositionAndStatus("Exit", buttonPos);
+            Form.BackgroundImageLayout = ImageLayout.Stretch;
+            Form.BackgroundImage = images["backMenu"];
         }
 
         private void End()
@@ -145,30 +124,26 @@ namespace CrazyKiller
                 Application.Exit();
             Sounds.Stop();
             counter++;
-            if (IsOver) return;
-            IsOver = true;
+            if (isOver) return;
+            isOver = true;
             var label = new Label();
             label.Size = new Size(GameModel.WindowSize.Width * 3 / 4, 500);
             label.BackColor = Color.Transparent;
             label.Font = new Font(FontFamily.GenericMonospace, 40, FontStyle.Italic);
-            label.ForeColor = labelFontColor;
+            label.ForeColor = Color.White;
             label.TextAlign = ContentAlignment.MiddleCenter;
-            label.Location = new Point((form.ClientSize.Width - label.Size.Width) / 2,
-                (form.ClientSize.Height - label.Size.Height) / 2);
-            label.Text = game.IsWon ? phrases.FirstOrDefault() : phrases.LastOrDefault();
-            form.Controls.Clear();
-            form.Controls.Add(label);
+            label.Location = new Point((Form.ClientSize.Width - label.Size.Width) / 2,
+                (Form.ClientSize.Height - label.Size.Height) / 2);
+            label.Text = Game.IsWon ? phrases.FirstOrDefault() : phrases.LastOrDefault();
+            Form.Controls.Clear();
+            Form.Controls.Add(label);
             label.BringToFront();
         }
 
         private void PaintAim()
         {
             var aimPos = PointMethods.GetOffsetPosition(Player.Gun);
-            graphics.DrawImage(images["aimSmall"], aimPos);
-            if (Player.Gun.ISPenetration)
-                graphics.DrawRectangle(new Pen(Color.Chartreuse, 10), 10, 10, 50, 50);
-            if (Player.Gun.MouseIsClick)
-                graphics.DrawRectangle(new Pen(Color.Blue, 10), 60, 10, 50, 50);
+            Graphics.DrawImage(images["aimSmall"], aimPos);
         }
 
         private void PanelBar()
@@ -178,16 +153,16 @@ namespace CrazyKiller
             var end = start;
             end.X += length;
             var pen = new Pen(Color.Black, 27);
-            graphics.DrawLine(pen, start, end);
+            Graphics.DrawLine(pen, start, end);
             end.X = start.X + (int) (length * (Player.Hp * 1.0 / Player.MaxHp));
             pen.Color = Color.Red;
-            graphics.DrawLine(pen, start, end);
+            Graphics.DrawLine(pen, start, end);
 
             end.X = start.X + length;
             PaintGun(end);
 
-            var pos = new Point(form.ClientSize.Width - 230, form.ClientSize.Height / 2 - 50);
-            graphics.DrawString("волна " + game.currentLevel?.Number, buttonFont, new SolidBrush(Color.Black), pos);
+            var pos = new Point(Form.ClientSize.Width - 230, Form.ClientSize.Height / 2 - 50);
+            Graphics.DrawString("волна " + Game.CurrentLevel?.Number, buttonFont, new SolidBrush(Color.Black), pos);
         }
 
         private void PaintGun(Point position)
@@ -215,24 +190,24 @@ namespace CrazyKiller
             }
 
             var rect = new Rectangle(imagePosition, imageSize);
-            graphics.DrawImage(image, position.X, position.Y, rect, GraphicsUnit.Pixel);
+            Graphics.DrawImage(image, position.X, position.Y, rect, GraphicsUnit.Pixel);
 
             var ammunition = (Player.Gun.Ammunition - Player.Gun.FiredAmmunition).ToString();
             position = new Point(position.X + imageSize.Width + 20, position.Y + 10);
-            graphics.DrawString(ammunition + " ", ammunitionFont, new SolidBrush(Color.Black), position);
+            Graphics.DrawString(ammunition + " ", ammunitionFont, new SolidBrush(Color.Black), position);
         }
 
         private void Items()
         {
-            if (game.MedKit.IsActive)
-                graphics.DrawImage(images["medkitSmall"], PointMethods.GetOffsetPosition(game.MedKit));
+            if (Game.MedKit.IsActive)
+                Graphics.DrawImage(images["medkitSmall"], PointMethods.GetOffsetPosition(Game.MedKit));
 
-            if (game.Box.IsActive)
+            if (Game.Box.IsActive)
             {
-                var box = game.Box;
+                var box = Game.Box;
                 var position = PointMethods.GetOffsetPosition(box);
                 var rectangle = new Rectangle(0, 0, box.Size.Width, box.Size.Height);
-                graphics.DrawImage(images["boxSmall"], position.X, position.Y, rectangle, GraphicsUnit.Pixel);
+                Graphics.DrawImage(images["boxSmall"], position.X, position.Y, rectangle, GraphicsUnit.Pixel);
             }
         }
     }

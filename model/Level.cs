@@ -10,13 +10,12 @@ namespace CrazyKiller
     {
         public readonly int Number;
         public readonly int CountZombies;
-        private static int degreeIncrease = 5;
+        private static readonly int degreeIncrease = 5;
 
         public Level(int number)
         {
             Number = number;
             CountZombies = number * degreeIncrease;
-            //CountZombies = (int)Math.Pow(2, number);
         }
     }
 }

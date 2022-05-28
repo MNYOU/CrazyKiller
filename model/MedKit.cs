@@ -8,7 +8,7 @@ namespace CrazyKiller
 {
     public class MedKit : Item
     {
-        public int Health { get; }
+        private int Health { get; }
 
         public MedKit()
         {

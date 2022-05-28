@@ -14,11 +14,19 @@ namespace CrazyKiller
         public Point MousePosition;
         public bool IsAttacked;
         private readonly Dictionary<Keys, bool> keysClicks;
+        private int Speed { get; }
+        public Point Position { get; private set; }
+        public Point PreviousPosition { get; private set; }
+        public Size Size { get; set; }
+        private Size Offset { get; set; }
+        public int MaxHp { get; }
+        public int Hp { get; private set; }
+        public Gun Gun { get; set; }
 
         public Player()
         {
             Speed = 5;
-            Position = new Point(700, 400);
+            Position = new Point(GameModel.WindowSize.Width / 2, GameModel.WindowSize.Height / 2);
             PreviousPosition = Position;
             MaxHp = 1000;
             Hp = MaxHp;
@@ -32,15 +40,7 @@ namespace CrazyKiller
             };
         }
 
-        private int Speed { get; }
-        public Point Position { get; set; }
-        public Point PreviousPosition { get; private set; }
-        public Size Size { get; set; }
-        public Size Offset { get; private set; }
-        public int MaxHp { get; }
-        public int Hp { get; private set; }
 
-        public Gun Gun { get; set; }
 
         public void Move()
         {
@@ -71,7 +71,6 @@ namespace CrazyKiller
             if (click != keysClicks[key])
                 keysClicks[key] = !keysClicks[key];
         }
-
 
         public void AddHeath(int heath)
         {

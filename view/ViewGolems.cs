@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CrazyKiller
 {
@@ -16,22 +13,23 @@ namespace CrazyKiller
         private static int wait;
         private int counter;
 
-        public ViewGolems(List<Golem> zombies)
+        public ViewGolems(List<Golem> golems)
         {
             golemsImages = new List<GolemImages>();
             for (var i = 0; i < 3; i++)
                 golemsImages.Add(new GolemImages(i + 1));
-
-            Initialize(zombies);
+            if (golems != null && golemsImages != null)
+                golems.FirstOrDefault().Size = golemsImages.FirstOrDefault().Attacking.FirstOrDefault().Size;
+            Initialize(golems);
         }
 
-        private void Initialize(List<Golem> zombies)
+        private void Initialize(List<Golem> golems)
         {
             wait = 1;
-            golems = new List<ViewGolem>();
-            foreach (var zombie in zombies)
+            this.golems = new List<ViewGolem>();
+            foreach (var zombie in golems)
             {
-                golems.Add(new ViewGolem(zombie, counter % 3));
+                this.golems.Add(new ViewGolem(zombie, counter % 3));
                 if (counter == 2) counter = 0;
                 else counter++;
             }
@@ -48,8 +46,6 @@ namespace CrazyKiller
                     graphics.DrawImage(image, pos.X + image.Width, pos.Y, -image.Width, image.Height);
                 else
                     graphics.DrawImage(image, pos);
-                // graphics.DrawRectangle(new Pen(Color.Red, 5),
-                //     new Rectangle(golem.GetPosition().X, golem.GetPosition().Y, image.Width, image.Height));
             }
         }
 
@@ -72,7 +68,7 @@ namespace CrazyKiller
                 state = GolemState.Walking;
                 previousState = state;
                 queueImages = new Queue<Image>();
-                elapsedTime = GameModel.rnd.Next(images.Attacking.Count);
+                elapsedTime = GameModel.Random.Next(images.Attacking.Count);
             }
 
             public Image GetImage()
@@ -146,9 +142,9 @@ namespace CrazyKiller
             }
         }
 
-        public class GolemImages
+        private class GolemImages
         {
-            public int Id { get; }
+            private int Id { get; }
             public List<Image> Walking { get; private set; }
             public List<Image> Attacking { get; private set; }
             public List<Image> Hurt { get; private set; }
@@ -166,7 +162,7 @@ namespace CrazyKiller
                 Hurt = new List<Image>();
                 Attacking = new List<Image>();
                 Walking = new List<Image>();
-                var number = GameModel.rnd.Next(3) + 1;
+                var number = GameModel.Random.Next(3) + 1;
                 AddImagesForEvent(Walking, Id, GolemState.Walking);
                 AddImagesForEvent(Attacking, Id, GolemState.Attacking);
                 AddImagesForEvent(Hurt, Id, GolemState.Hurt);

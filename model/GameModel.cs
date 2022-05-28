@@ -11,40 +11,37 @@ namespace CrazyKiller
 {
     public class GameModel
     {
-        public readonly Player Player;
-        public List<Golem> Zombies;
-        public Level[] levels;
-        public Level currentLevel;
-        public MedKit MedKit;
-        public Box Box;
-        public Size Size;
         public static Size WindowSize;
+        public static readonly Random Random = new Random();
+        public readonly Player Player;
+        public readonly List<Golem> Golems;
+        private readonly Level[] levels;
+        public readonly MedKit MedKit;
+        public readonly Box Box;
         public Timer Timer;
         public bool IsPause;
         private int counter;
+        public Level CurrentLevel { get; private set; }
         public bool IsOver { get; private set; }
         public bool IsWon { get; private set; }
         public bool IsStarted { get; private set; }
-        public static Random rnd = new Random();
-        public Point MousePosition;
 
         public GameModel()
         {
             Player = new Player();
             InitializeTimer();
-            Zombies = new List<Golem>();
+            Golems = new List<Golem>();
             MedKit = new MedKit();
             Box = new Box();
             levels = new Level[9].Select((x, i) => new Level(i + 1)).ToArray();
-            currentLevel = levels?.FirstOrDefault();
+            CurrentLevel = levels?.FirstOrDefault();
             InitializeZombies();
         }
 
         private void InitializeZombies()
         {
-            for (var i = 0; i < currentLevel?.CountZombies; i++)
-            // for (var i = 0; i < 1; i++)
-                Zombies.Add(new Golem());
+            for (var i = 0; i < CurrentLevel?.CountZombies; i++)
+                Golems.Add(new Golem());
         }
 
         public void Start()
@@ -66,10 +63,9 @@ namespace CrazyKiller
 
             Player.Move();
             Player.IsAttacked = false;
-            foreach (var zombie in Zombies)
+            foreach (var zombie in Golems)
             {
                 zombie.IsAttack = false;
-                // zombie.IsPenetration = false;
                 zombie.Move(Player);
                 if (IsInteract(zombie, Player))
                 {
@@ -79,32 +75,28 @@ namespace CrazyKiller
                 }
             }
 
-            Player.Gun.Shoot(Zombies);
+            Player.Gun.Shoot(Golems);
             MedKit.Interact(Player);
             Box.Interact(Player);
 
-            ChangeLevel();
-
+            if (Golems.Count == 0) ChangeLevel();
             if (Player.Hp == 0) IsOver = true;
         }
 
         private void ChangeLevel()
         {
-            if (Zombies.Count == 0)
+            if (levels is null || levels.Length == 0 || CurrentLevel.Number == levels.Length)
             {
-                if (levels is null || levels.Length == 0 || currentLevel.Number == levels.Length)
-                {
-                    IsOver = true;
-                    IsWon = true;
-                    return;
-                }
-
-                counter++;
-                if (counter < 100) return;
-                currentLevel = levels[currentLevel.Number];
-                InitializeZombies();
-                counter = 0;
+                IsOver = true;
+                IsWon = true;
+                return;
             }
+
+            counter++;
+            if (counter < 100) return;
+            CurrentLevel = levels[CurrentLevel.Number];
+            InitializeZombies();
+            counter = 0;
         }
 
         public static bool IsInteract(object one, object two)
@@ -119,12 +111,8 @@ namespace CrazyKiller
 
         public static bool CanMove(Point destination, Size size)
         {
-            if (destination.X - size.Width / 2 > WindowSize.Width ||
-                destination.X - size.Width / 2 < 0 ||
-                destination.Y + size.Height / 2 > WindowSize.Height ||
-                destination.Y - size.Height / 2 < 0)
-                return false;
-            return true;
+            return destination.X - size.Width / 2 <= WindowSize.Width && destination.X - size.Width / 2 >= 0 &&
+                   destination.Y + size.Height / 2 <= WindowSize.Height && destination.Y - size.Height / 2 >= 0;
         }
     }
 }

@@ -20,11 +20,11 @@ namespace CrazyKiller
         private (Image, Size) hurt;
         private (Image, Size) blink;
         private (Image, Size) reloading;
-        private (Image, Size) standing;
         private PlayerState state;
-        private PlayerState previousState;
         private bool isTurnLeft;
         private int counter;
+        private int Wait { get; }
+        private Point Pos => PointMethods.GetOffsetPosition(player);
 
         public ViewPlayer(Player player)
         {
@@ -33,22 +33,18 @@ namespace CrazyKiller
             Initialise();
         }
 
-        private int Wait { get; }
-        private Point Pos => PointMethods.GetOffsetPosition(player);
-
         private void Initialise()
         {
-            runAndShoot = GetImage("shooting_while_run", 6);
-            running = GetImage("run", 6);
-            shooting = GetImage("shooting_while_stand", 3);
-            hurt = GetImage("hurting", 1);
-            blink = GetImage("blinking", 3);
-            reloading = GetImage("reloading_while_stand", 7);
-            standing = GetImage("stand", 1);
+            runAndShoot = GetImageWithSize("shooting_while_run", 6);
+            running = GetImageWithSize("run", 6);
+            shooting = GetImageWithSize("shooting_while_stand", 3);
+            hurt = GetImageWithSize("hurting", 1);
+            blink = GetImageWithSize("blinking", 3);
+            reloading = GetImageWithSize("reloading_while_stand", 7);
+            GetImageWithSize("stand", 1);
 
             player.Size = hurt.Item2;
             state = PlayerState.Stand;
-            previousState = state;
         }
 
         public void Paint(Graphics graphics)
@@ -69,8 +65,6 @@ namespace CrazyKiller
                 imageSize.Width * (counter / Wait) == 0 ? 0 : imageSize.Width * (counter / Wait - 1), 0,
                 imageSize.Width, imageSize.Height);
             graphics.DrawImage(image, Pos.X, Pos.Y, rec, GraphicsUnit.Pixel);
-            // graphics.DrawRectangle(new Pen(Color.Black, 5),
-            //     new Rectangle(Pos.X, Pos.Y, imageSize.Width, imageSize.Height));
         }
 
         private (Image, Size) GetImagesByState()
@@ -95,7 +89,6 @@ namespace CrazyKiller
 
         private void UpdateState()
         {
-            previousState = state;
             if (player.Position != player.PreviousPosition)
                 state = player.Gun.MouseIsClick && player.Gun.FiredAmmunition != player.Gun.Ammunition
                     ? PlayerState.AttackAndRun
@@ -116,24 +109,16 @@ namespace CrazyKiller
                 else if (Math.Sign(mouseOffsetX) == -1) isTurnLeft = true;
             }
             else if (Math.Sign(mouseOffsetX) == 1 && isTurnLeft && state != PlayerState.Run)
-            {
                 isTurnLeft = false;
-            }
             else if (Math.Sign(mouseOffsetX) == -1 && !isTurnLeft && state != PlayerState.Run)
-            {
                 isTurnLeft = true;
-            }
             else if (Math.Sign(offsetX) == 1 && isTurnLeft)
-            {
                 isTurnLeft = false;
-            }
             else if (Math.Sign(offsetX) == -1 && !isTurnLeft)
-            {
                 isTurnLeft = true;
-            }
         }
 
-        private (Image, Size) GetImage(string even, int imagesCount)
+        private static (Image, Size) GetImageWithSize(string even, int imagesCount)
         {
             var builder = new StringBuilder();
             builder.Append(even);
